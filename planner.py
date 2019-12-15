@@ -8,7 +8,7 @@ class Planner():
         domain=problem.domain
         init_node=problem.init_state
         goals=problem.goals
-        solve(domain,init_node,goals)
+        self.solve(domain,init_node,goals)
 
     def heuristic(self,node):
         return 0
@@ -16,17 +16,17 @@ class Planner():
     def solve(self,domain,init_node,goals):
         states_explored = 0
         closed = set()
-        fringe = [(heuristic(init_node), -init_node.cost, init_node)]
-        heapq.heapify(fringe)
+        opened = [(self.heuristic(init_node), -init_node.cost, init_node)]
+        heapq.heapify(opened) #min heap
         start = time()
         #a-star search
         while True:
-            if len(fringe) == 0:
-                print('States Explored: %d'%(states_explored))
+            if len(opened) == 0:
+                print('\nStates Explored: %d'%(states_explored))
                 return None
 
             # Get node with minimum evaluation function from heap
-            h, _, node = heapq.heappop(fringe)
+            h, _, node = heapq.heappop(opened)
             states_explored += 1
 
             # Goal test
@@ -36,19 +36,20 @@ class Planner():
                     print(a)
                 break
 
-            # Expand node if we haven't seen it before
+            # Expand node if not in closed
             if node not in closed:
                 closed.add(node)
-                # Apply all applicable actions to get successors
 
-                successors = set(node.apply(action)
-                                 for action in domain.actions.values()
-                                 if node.can_apply(action))
+                #apply action by checking precondition
+                applied=set()
+                for action in domain.actions.values():
+                    if node.can_apply(action):
+                        applied.add(node.apply(action))
 
                 # Compute heuristic and add to fringe
-                for successor in successors:
+                for successor in applied:
                     if successor not in closed:
-                        f = successor.cost + heuristic(successor)
-                        heapq.heappush(fringe, (f, -successor.cost, successor))
+                        e = successor.cost + self.heuristic(successor)
+                        heapq.heappush(opened, (e, successor.cost, successor))
 
 Planner('./domain/diaper_domain.pddl','./problem/diaper_story.pddl')
